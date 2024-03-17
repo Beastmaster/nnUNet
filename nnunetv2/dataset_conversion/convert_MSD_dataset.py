@@ -42,6 +42,7 @@ def convert_msd_dataset(source_folder: str, overwrite_target_id: Optional[int] =
                         num_processes: int = default_num_processes) -> None:
     if source_folder.endswith('/') or source_folder.endswith('\\'):
         source_folder = source_folder[:-1]
+    print("--")
 
     labelsTr = join(source_folder, 'labelsTr')
     imagesTs = join(source_folder, 'imagesTs')
@@ -67,6 +68,7 @@ def convert_msd_dataset(source_folder: str, overwrite_target_id: Optional[int] =
     target_imagesTr = join(target_folder, 'imagesTr')
     target_imagesTs = join(target_folder, 'imagesTs')
     target_labelsTr = join(target_folder, 'labelsTr')
+    print(target_imagesTr)
     maybe_mkdir_p(target_imagesTr)
     maybe_mkdir_p(target_imagesTs)
     maybe_mkdir_p(target_labelsTr)
@@ -129,4 +131,5 @@ def entry_point():
 
 
 if __name__ == '__main__':
-    convert_msd_dataset('/home/fabian/Downloads/Task05_Prostate', overwrite_target_id=201)
+    print("----")
+    convert_msd_dataset('F:\Data\MSD\Task02_Heart\Task02_Heart\\', overwrite_target_id=201)

@@ -1,0 +1,21 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python Debugger: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "nnunetv2/run/run_training.py",
+            "args": ["999", "3d_fullres",  "1", "--use_compressed"],
+            "console": "integratedTerminal",
+            "env": {
+                "nnUNet_raw":"F:\\Data\\dataset_verseg\\dataset-verse19training\\raw",
+                "nnUNet_preprocessed": "F:\\Data\\dataset_verseg\\dataset-verse19training\\preprocess",
+                "nnUNet_results": "F:\\Data\\dataset_verseg\\dataset-verse19training\\results"
+              }
+        }
+    ]
+}
