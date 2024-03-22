@@ -1,9 +1,9 @@
 
 
 import os
-os.environ["nnUNet_raw"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\raw"
-os.environ["nnUNet_preprocessed"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\preprocess"
-os.environ["nnUNet_results"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\results"
+# os.environ["nnUNet_raw"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\raw"
+# os.environ["nnUNet_preprocessed"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\preprocess"
+# os.environ["nnUNet_results"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\results"
 
 # nnUNet_raw = os.environ.get('nnUNet_raw')
 # nnUNet_preprocessed = os.environ.get('nnUNet_preprocessed')
@@ -22,6 +22,9 @@ from nnunetv2.configuration import default_num_processes
 import numpy as np
 from pathlib import Path
 from nnunetv2.paths import nnUNet_raw
+from nnunetv2.dataset_conversion.verse.utils.data_utilities import resample_nib, reorient_to
+import nibabel as nib
+import nibabel.orientations as nio
 
 v_dict = {
     0: 'bg',
@@ -34,11 +37,13 @@ v_dict = {
 
 def seg_label_map_fn(verse_label):
     if verse_label == 0:
-        return verse_label
+        return 0
     if verse_label in [26, 27]:
         return 2
-    else:
+    elif verse_label in v_dict:
         return 1
+    else:
+        return 0
 
 def copy_Verse_segment_label_to_nnUnet(in_file: str, out_file: str)-> None:
     # use this for segmentation only!!!
@@ -57,6 +62,37 @@ def copy_Verse_segment_label_to_nnUnet(in_file: str, out_file: str)-> None:
     img_corr.CopyInformation(img)
     sitk.WriteImage(img_corr, out_file)
 
+def copy_Verse_segment_label_to_nnUnet2(in_file: str, out_file: str)-> None:
+
+    # use this for segmentation only!!!
+    # nnUNet wants the labels to be continuous. BraTS is 0, 1, 2, 4 -> we make that into 0, 1, 2, 3
+    img_nib = nib.load(in_file)
+    img_iso = resample_nib(img_nib, voxel_spacing=(1, 1, 1), order=0)
+    img_iso = reorient_to(img_iso, axcodes_to=('I', 'P', 'L'))
+    img_npy = img_iso.get_fdata()
+    unique_labels = np.unique(img_npy)
+
+    seg_new = np.zeros_like(img_npy)
+    for ul in unique_labels:
+        if ul not in v_dict:
+            print(f'{in_file}: unexpected label: {ul}')
+            seg_new[img_npy == ul] = 0
+            continue
+        seg_new[img_npy == ul] = seg_label_map_fn(ul)
+
+    # Create a new NIfTI image with the modified data but original affine and header
+    modified_img = nib.Nifti1Image(seg_new, img_iso.affine, img_iso.header)
+    # Save the modified NIfTI file
+    nib.save(modified_img, out_file)
+
+def copy_Verse_ori_image_to_nnUnet2(in_file: str, out_file: str)-> None:
+    # use this for segmentation only!!!
+    # nnUNet wants the labels to be continuous. BraTS is 0, 1, 2, 4 -> we make that into 0, 1, 2, 3
+    img_nib = nib.load(in_file)
+    img_iso = resample_nib(img_nib, voxel_spacing=(1, 1, 1), order=3)
+    img_iso = reorient_to(img_iso, axcodes_to=('I', 'P', 'L'))
+    # Save the modified NIfTI file
+    nib.save(img_iso, out_file)
 
 def copy_sample_to_preprocess(img_nii, mask_nii, out_base):
     print(img_nii)
@@ -72,8 +108,13 @@ def copy_sample_to_preprocess(img_nii, mask_nii, out_base):
     img_out_nii = img_out_dir / f"{case_id}_0000.nii.gz"
     mask_out_nii = mask_out_dir/ f"{case_id}.nii.gz" 
 
-    shutil.copy(img_nii, img_out_nii)
-    copy_Verse_segment_label_to_nnUnet(mask_nii, str(mask_out_nii))
+    if False:
+        shutil.copy(img_nii, img_out_nii)
+        copy_Verse_segment_label_to_nnUnet(mask_nii, str(mask_out_nii))
+
+    copy_Verse_ori_image_to_nnUnet2(img_nii, str(img_out_nii))
+    copy_Verse_segment_label_to_nnUnet2(mask_nii, str(mask_out_nii))
+
     return case_id
     
 
@@ -88,12 +129,22 @@ def convert_Verse_dataset(source_folder: str, overwrite_target_id: Optional[int]
     target_dataset_name = f"Dataset{target_id:03d}_verse"
     target_folder = join(nnUNet_raw, target_dataset_name)
   
+    ignore = ["sub-verse525", "sub-verse577", "sub-verse641", "sub-verse642", "sub-verse593", "sub-verse833"]
+
     case_ids = []
     # scan source dir
     raw_data_path = Path(source_folder) / "rawdata"
     mask_path = Path(source_folder) / "derivatives"
     # iterate dirs
     for sub_dir in raw_data_path.iterdir():
+        skip = False
+        for i in ignore:
+            if i in str(sub_dir):
+                skip = True
+                break
+        if skip:
+            continue
+        
         sub_name = sub_dir.name
         # print(sub_name)
         img_nii_files = list(sub_dir.glob("*.nii.gz"))
@@ -106,8 +157,8 @@ def convert_Verse_dataset(source_folder: str, overwrite_target_id: Optional[int]
             # copy
             case_id = copy_sample_to_preprocess(img_nii, mask_nii, target_folder)
             case_ids.append(case_id)
-        if len(case_ids) > 5:
-            break
+        # if len(case_ids) > 5:
+        #     break
     
     generate_dataset_json(target_folder,
                           channel_names={0: 'CT', },
@@ -142,7 +193,7 @@ def entry_point():
 
 if __name__ == '__main__':
     print("----")
-    convert_Verse_dataset('F:\Data\dataset_verseg\dataset-verse19training\dataset-verse19training', overwrite_target_id=999)
+    convert_Verse_dataset('/workspace/third/mmseg2/mmsegmentation/data/dataset-01training/', overwrite_target_id=999)
     
 
     # step2:

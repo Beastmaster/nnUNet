@@ -12,9 +12,9 @@
             "args": ["999", "3d_fullres",  "1", "--use_compressed"],
             "console": "integratedTerminal",
             "env": {
-                "nnUNet_raw":"F:\\Data\\dataset_verseg\\dataset-verse19training\\raw",
-                "nnUNet_preprocessed": "F:\\Data\\dataset_verseg\\dataset-verse19training\\preprocess",
-                "nnUNet_results": "F:\\Data\\dataset_verseg\\dataset-verse19training\\results"
+                "nnUNet_raw":"/workspace/third/mmseg2/mmsegmentation/data/dataset-01training/",
+                "nnUNet_preprocessed": "/workspace/third/mmseg2/mmsegmentation/data/nnunet",
+                "nnUNet_results": "/workspace/third/mmseg2/mmsegmentation/data/nnunet"
               }
         }
     ]

@@ -37,6 +37,6 @@ if nnUNet_results is None:
     print("nnUNet_results is not defined and nnU-Net cannot be used for training or "
           "inference. If this is not intended behavior, please read documentation/setting_up_paths.md for information "
           "on how to set this up.")
-os.environ["nnUNet_raw"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\raw"
-os.environ["nnUNet_preprocessed"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\preprocess"
-os.environ["nnUNet_results"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\results"
+# os.environ["nnUNet_raw"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\raw"
+# os.environ["nnUNet_preprocessed"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\preprocess"
+# os.environ["nnUNet_results"] = "F:\\Data\\dataset_verseg\\dataset-verse19training\\results"
